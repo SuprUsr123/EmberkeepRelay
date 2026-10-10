@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 'use strict';
 const http = require('http');
-
 const API_BASE     = process.env.UPSTREAM_API   || 'https://kindlehub-api.arancool3000.workers.dev';
 const STATE_BASE   = process.env.UPSTREAM_STATE || 'https://kindlehub-state.arancool3000.workers.dev';
 const SPOOF_ORIGIN = process.env.SPOOF_ORIGIN   || 'https://kindlehub.pro';
 const PORT         = parseInt(process.env.PORT  || '8787', 10);
-const HOST         = process.env.HOST           || '127.0.0.1';
+const HOST         = process.env.HOST           || '0.0.0.0';
 
 const STRIP = new Set([
   'connection','keep-alive','proxy-authenticate','proxy-authorization',
