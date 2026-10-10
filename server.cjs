@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const http = require('http');
+
 const API_BASE     = process.env.UPSTREAM_API   || 'https://kindlehub-api.arancool3000.workers.dev';
 const STATE_BASE   = process.env.UPSTREAM_STATE || 'https://kindlehub-state.arancool3000.workers.dev';
 const SPOOF_ORIGIN = process.env.SPOOF_ORIGIN   || 'https://kindlehub.pro';
@@ -14,12 +15,11 @@ const STRIP = new Set([
 ]);
 
 function cors(req) {
-  const origin = req.headers.origin || 'null';
-  const acrh   = req.headers['access-control-request-headers'];
+  const requested = req.headers['access-control-request-headers'];
   return {
-    'Access-Control-Allow-Origin':  origin,
+    'Access-Control-Allow-Origin':  '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': acrh || 'Content-Type, X-KH-Secret, Prefer, Authorization',
+    'Access-Control-Allow-Headers': requested || 'Accept, Authorization, Content-Type, Prefer, X-KH-Account, X-KH-Admin, X-KH-Rekey-From, X-KH-Rekey-Name, X-KH-Secret',
     'Access-Control-Expose-Headers':'*',
     'Access-Control-Max-Age':       '86400',
     'Vary':                         'Origin'
@@ -33,11 +33,14 @@ async function readBody(req) {
 }
 
 http.createServer(async (req, res) => {
-  const chdr = cors(req);
-
-  if (req.method === 'OPTIONS') { res.writeHead(204, chdr); return res.end(); }
-
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  if (u.pathname === '/__health') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    return res.end(JSON.stringify({ ok: true }));
+  }
+
+  const chdr = cors(req);
+  if (req.method === 'OPTIONS') { res.writeHead(204, chdr); return res.end(); }
 
   let base, path;
   if (u.pathname === '/state' || u.pathname.startsWith('/state/')) {
@@ -47,9 +50,7 @@ http.createServer(async (req, res) => {
   } else if (u.pathname.startsWith('/api/')) {
     base = API_BASE;
     path = u.pathname.slice('/api'.length);
-  } else if (u.pathname === '/__health') {
-    res.writeHead(200, { ...chdr, 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({ ok: true, api: API_BASE, state: STATE_BASE, origin: SPOOF_ORIGIN }));
+    if (!path.startsWith('/rest/v1/')) path = path.startsWith('/rpc/') ? '/rest/v1' + path : '/rest/v1' + path;
   } else {
     res.writeHead(404, { ...chdr, 'Content-Type': 'text/plain' });
     return res.end('relay: unknown route ' + u.pathname);

@@ -1,8 +1,16 @@
 {
-  "name": "emberkeep-relay",
+  "name": "emberkeep-kindlehub-relay",
   "version": "1.0.0",
   "private": true,
-  "main": "server.cjs",
-  "scripts": { "start": "node server.cjs" },
-  "engines": { "node": ">=20" }
+  "type": "module",
+  "description": "Restricted server-side relay for Emberkeep Ultimate's KindleHub API calls",
+  "scripts": {
+    "start": "node server.cjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
 }
